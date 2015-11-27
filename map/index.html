@@ -1,39 +1,105 @@
 <html>
 <head>
   <title>A map I made!</title>
-  <script src="jquery-2.1.1.min.js"></script>
   <style>
     #map{ height: 100% }
   </style>
+  <!-- include Leaflet control by Alan shaw  -->
+  <link rel="stylesheet" href="https://raw.githubusercontent.com/alanshaw/leaflet-zoom-min/master/L.Control.ZoomMin.css" media="screen" />
+  <script src="https://raw.githubusercontent.com/alanshaw/leaflet-zoom-min/master/L.Control.ZoomMin.js"></script>
+
+  <!-- include CartoDB CSS -->
   <link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
-  <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+
+  <!-- include Leaflet.MarkerCluster by David Leaver  -->
+  <link rel="stylesheet" href="MarkerCluster.css" />
+  <link rel="stylesheet" href="MarkerCluster.Default.css" />
+  <script src="leaflet.markercluster-src.js"></script>
+
+</head>
+<body>
+  <div id="map"></div>
 
   <!-- include cartodb.js library -->
   <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
-
+  
 
   <script>
-
   // initialize the map
-  var map = L.map('map').setView([55.7, 12.57], 9);
+  function main() {
+    var map = new L.map('map', {
+      center: [55.7, 12.57],
+      zoom: 7,
+      minZoom: 2,
+      maxZoom: 18,
+      zoomControl: true
+    });
 
-  // base map
-  L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    // map.addControl(new L.Control.ZoomMin());
+
+  // add grayscale base map
+  var grayscale = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
     {
       attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
       maxZoom: 19
     }).addTo(map);
 
-  // CartoDB layer
+  // add MapBox base map (https: also suppported.)
+  var MapBox = L.tileLayer('http://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+    attribution: 'Imagery from <a href="http://mapbox.com/about/maps/">MapBox</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    subdomains: 'abcd',
+    id: 'mapbox.emerald',
+    accessToken: 'pk.eyJ1IjoiaGVsaWFjIiwiYSI6ImNpaGc5aGtqMjAwOGd1Mm00a29uNWx0OGIifQ.4SHX0X20BGzX9adhHxFQsg'
+  });
+
+
+  var baseMaps = {
+    "Grayscale": grayscale,
+    "Street": MapBox
+  };
+
+  // add CartoDB layers
   var anlaegLayer = 'https://heliacmaps.cartodb.com/api/v2/viz/4d26324a-9363-11e5-8e62-0ecfd53eb7d3/viz.json';
+  var locationLayer = 'https://heliacmaps.cartodb.com/api/v2/viz/213ccf56-9424-11e5-b09f-0e674067d321/viz.json';
 
-  cartodb.createLayer(map, anlaegLayer)
+  cartodb.createLayer(map, locationLayer)
     .addTo(map)
+    .done(function(layer)
+    {
+      locationLayer = layer;
 
+      cartodb.createLayer(map, anlaegLayer)
+      .addTo(map)
+      .done(function(layer)
+      {
+        anlaegLayer = layer;
+
+        var overlayMaps = {
+          "Heliac Locations": locationLayer,
+          "Solar Thermal Collectors": anlaegLayer
+        };
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+      });
+    });
+    // .on('done', function(layer) {
+    //       layer.setInteraction(true);
+    //       layer.on('featureOver', function(e, latlng, pos, data) {
+    //         cartodb.log.log(e, latlng, pos, data);
+    //       });
+    //       layer.on('error', function(err) {
+    //         cartodb.log.log('error: ' + err);
+    //       });
+    //     }).on('error', function() {
+    //       cartodb.log.log("some error occurred");
+    //     });
+
+    } // main
+
+
+      // you could use $(window).load(main);
+      window.onload = main;
   </script>
-</head>
-<body>
-  <div id="map"></div>
+
 </body>
 </html>
 	
